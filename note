@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+notes_exist() {
+  compgen -G "$1*" > /dev/null
+}
+
+notes_ls() {
+  if [[ "$1" == "" ]]; then
+    glob=""
+  else
+    glob=$(date --date="$1" +%Y-%m-%d-)
+  fi
+
+  if notes_exist "$glob"; then
+    for f in $glob*.txt; do
+      year=$(echo "$f" | cut -d '-' -f 1)
+      month=$(echo "$f" | cut -d '-' -f 2)
+      day=$(echo "$f" | cut -d '-' -f 3)
+      entry=$(echo "$f" | cut -d '-' -f 4 | cut -d '.' -f 1)
+      short=$(head -n 1 "$f")
+      printf "\e[1;38;5;241m%d-\e[1;38;5;75m%.2d-%.2d\e[39;0m\e[1;38;5;241m-%.2d\e[39;m   %s\n" "$year" "$month" "$day" "$entry" "$short"
+    done
+  fi
+}
+
+if [[ "$1" == "ls" ]]; then
+  notes_ls "$2"
+
+elif [[ "$1" == "new" ]]; then
+  glob=$(date +%Y-%m-%d-)
+  new_index=1
+  if notes_exist "$glob"; then
+    while true; do
+      f=$(printf "%s-%.2d.txt" "$(date +%Y-%m-%d)" "$new_index")
+      if [[ -f "$f" ]]; then
+        new_index=$(($new_index+1))
+      else
+        break
+      fi
+    done
+  fi
+
+  filename="$(date +%Y-%m-%d)-$new_index.txt"
+  if [[ "$2" != "" ]]; then
+    echo "$2" > "$filename"
+  fi
+
+  $EDITOR "$filename"
+
+elif [[ "$1" == "edit" ]]; then
+  hyphen_count=$(echo "$2" | grep -o "-" | wc -l)
+
+  id="$2"
+  if [[ $hyphen_count == 0 ]]; then
+    id=$(date --date="$2" +%Y-%m-%d)
+  fi
+
+  if [[ "$id" == "" ]]; then
+    exit 1
+  fi
+
+  if [[ -f "$2.txt" ]]; then
+    $EDITOR "$2.txt"
+  else
+    hyphen_count=$(echo "$id" | grep -o "-" | wc -l)
+    if [[ $hyphen_count == 2 ]]; then
+      num_options=$(ls $id* | wc -l)
+      if [[ $num_options == 0 ]]; then
+        printf "no entries yet on $id\n"
+      elif [[ $num_options == 1 ]]; then
+        $EDITOR $(ls $id*)
+      else
+        notes_ls "$id"
+        printf "\n"
+        year=$(echo "$id" | cut -d '-' -f 1)
+        month=$(echo "$id" | cut -d '-' -f 2)
+        day=$(echo "$id" | cut -d '-' -f 3)
+        printf "\e[1;38;5;241m%d-\e[1;38;5;75m%.2d-%.2d-\e[39;0m" "$year" "$month" "$day"
+        read entry
+        $EDITOR "$year-$month-$day-$entry.txt"
+      fi
+    else
+      printf "no entry %s\n" "$2"
+    fi
+  fi
+
+fi
