@@ -41,9 +41,8 @@ elif [[ "$1" == "new" ]]; then
     done
   fi
 
-  filename="$(date +%Y-%m-%d)-$new_index.txt"
   if [[ "$2" != "" ]]; then
-    echo "$2" > "$filename"
+    echo "${@:2}" > "$filename"
   fi
 
   $EDITOR "$filename"
