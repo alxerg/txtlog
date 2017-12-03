@@ -29,10 +29,11 @@ if [[ "$1" == "ls" ]]; then
 elif [[ "$1" == "new" ]]; then
   glob=$(date +%Y-%m-%d-)
   new_index=1
+  filename=$(printf "%s-%.2d.txt" "$(date +%Y-%m-%d)" "$new_index")
   if notes_exist "$glob"; then
     while true; do
-      f=$(printf "%s-%.2d.txt" "$(date +%Y-%m-%d)" "$new_index")
-      if [[ -f "$f" ]]; then
+      filename=$(printf "%s-%.2d.txt" "$(date +%Y-%m-%d)" "$new_index")
+      if [[ -f "$filename" ]]; then
         new_index=$(($new_index+1))
       else
         break
