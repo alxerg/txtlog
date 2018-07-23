@@ -100,19 +100,11 @@ provided, you can choose from today's entries, if there are multiple.
 
 Examples:
 
-    $ txtlog edit 2018-07-
-    \e[1;38;5;241m2018-\e[1;38;5;75m07-22\e[39;0m\e[1;38;5;241m-01\e[39;m   The Empire Strikes Back
-    \e[1;38;5;241m2018-\e[1;38;5;75m07-23\e[39;0m\e[1;38;5;241m-01\e[39;m   Return of the Jedi
-    \e[1;38;5;241m2018-\e[1;38;5;75m07-23\e[39;0m\e[1;38;5;241m-02\e[39;m   The Force Awakens
-    Which one? \e[1;38;5;241m2018-\e[1;38;5;75m07-\e[39;m
-
-    $ txtlog edit
-    \e[1;38;5;241m2018-\e[1;38;5;75m07-23\e[39;0m\e[1;38;5;241m-01\e[39;m   Return of the Jedi
-    \e[1;38;5;241m2018-\e[1;38;5;75m07-23\e[39;0m\e[1;38;5;241m-02\e[39;m   The Force Awakens
-    Which one? \e[1;38;5;241m2018-\e[1;38;5;75m07-23-\e[39;m
-
-    $ txtlog edit last
-    # opens \e[1;38;5;241m2018-\e[1;38;5;75m07-23\e[39;0m\e[1;38;5;241m-02\e[39;m.txt
+    $ txtlog edit 2018-07
+            \e[1;38;5;241m2018-\e[1;38;5;75m07-22\e[39;0m\e[1;38;5;241m-01\e[39;m   The Empire Strikes Back
+            \e[1;38;5;241m2018-\e[1;38;5;75m07-23\e[39;0m\e[1;38;5;241m-01\e[39;m   Return of the Jedi
+            \e[1;38;5;241m2018-\e[1;38;5;75m07-23\e[39;0m\e[1;38;5;241m-02\e[39;m   The Force Awakens
+    Filter: \e[37m2018-07-2█\e[39;m
 "
 }
 
