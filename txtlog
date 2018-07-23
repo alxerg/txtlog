@@ -156,7 +156,6 @@ edit() {
         exec $EDITOR ${filter}*
         ;;
       *)
-        printf "Multiple matches:\n"
         list "$filter" "        "
         printf "Filter: \e[37m%s\e[39;0m" "$filter"
         read entry
