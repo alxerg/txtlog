@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
-notes_exist() {
+exists() {
   compgen -G "$1*" > /dev/null
 }
 
-notes_ls() {
+list() {
   if [[ "$1" == "" ]]; then
     glob=""
   else
     glob=$(date --date="$1" +%Y-%m-%d-)
   fi
 
-  if notes_exist "$glob"; then
+  if exists "$glob"; then
     for f in $glob*.txt; do
       year=$(echo "$f" | cut -d '-' -f 1)
       month=$(echo "$f" | cut -d '-' -f 2)
@@ -23,14 +23,14 @@ notes_ls() {
   fi
 }
 
-if [[ "$1" == "ls" ]]; then
-  notes_ls "$2"
+if [[ "$1" == "ls" || "$1" == "list" ]]; then
+  list "$2"
 
 elif [[ "$1" == "new" ]]; then
   glob=$(date +%Y-%m-%d-)
   new_index=1
   filename=$(printf "%s-%.2d.txt" "$(date +%Y-%m-%d)" "$new_index")
-  if notes_exist "$glob"; then
+  if exists "$glob"; then
     while true; do
       filename=$(printf "%s-%.2d.txt" "$(date +%Y-%m-%d)" "$new_index")
       if [[ -f "$filename" ]]; then
@@ -80,7 +80,7 @@ elif [[ "$1" == "edit" ]]; then
       elif [[ $num_options == 1 ]]; then
         $EDITOR $(ls $id*)
       else
-        notes_ls "$id"
+        list "$id"
         printf "\n"
         year=$(echo "$id" | cut -d '-' -f 1)
         month=$(echo "$id" | cut -d '-' -f 2)
