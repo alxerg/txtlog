@@ -48,6 +48,11 @@ elif [[ "$1" == "new" ]]; then
   $EDITOR "$filename"
 
 elif [[ "$1" == "edit" ]]; then
+  if [[ ${2: -4} == ".txt" ]]; then
+    $EDITOR "$2"
+    exit
+  fi
+
   hyphen_count=$(echo "$2" | grep -o "-" | wc -l)
 
   id="$2"
