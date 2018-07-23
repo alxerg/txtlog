@@ -1,97 +1,210 @@
 #!/usr/bin/env bash
 
-exists() {
-  compgen -G "$1*" > /dev/null
+today() {
+  date +%Y-%m-%d
+}
+
+common_prefix() {
+  read a; read b
+  while [[ "$b" != "" ]]; do
+    a=$(printf "%s\n%s\n" "$a" "$b" | sed -e 'N;s/^\(.*\).*\n\1.*$/\1/')
+    read b
+  done
+
+  printf "$a"
+}
+
+root_help() {
+  echo -e "
+Usage: txtlog COMMAND
+
+A tool to store notes nad journal entries in text files
+
+Commands:
+  list   List log entries
+  new    Create a new entry for today
+  edit   Edit a previously written entry
+  help   Show help messages
+
+Run 'txtlog help COMMAND' for more information on a command.
+"
+}
+
+list_help() {
+  echo -e "
+Usage: txtlog list [FILTER]
+
+List log entries, optionally with a filter. If no argument is provided, all
+entries will be listed.
+
+Examples:
+
+    $ txtlog list
+    \e[1;38;5;241m2017-\e[1;38;5;75m12-22\e[39;0m\e[1;38;5;241m-01\e[39;m   A New Hope
+    \e[1;38;5;241m2018-\e[1;38;5;75m06-22\e[39;0m\e[1;38;5;241m-01\e[39;m   The Empire Strikes Back
+    \e[1;38;5;241m2018-\e[1;38;5;75m07-23\e[39;0m\e[1;38;5;241m-01\e[39;m   Return of the Jedi
+
+    $ txtlog list 2018-07
+    \e[1;38;5;241m2018-\e[1;38;5;75m07-23\e[39;0m\e[1;38;5;241m-01\e[39;m   Return of the Jedi
+"
 }
 
 list() {
-  if [[ "$1" == "" ]]; then
-    glob=""
-  else
-    glob=$(date --date="$1" +%Y-%m-%d-)
-  fi
-
-  if exists "$glob"; then
-    for f in $glob*.txt; do
-      year=$(echo "$f" | cut -d '-' -f 1)
-      month=$(echo "$f" | cut -d '-' -f 2)
-      day=$(echo "$f" | cut -d '-' -f 3)
-      entry=$(echo "$f" | cut -d '-' -f 4 | cut -d '.' -f 1)
-      short=$(head -n 1 "$f")
-      printf "\e[1;38;5;241m%d-\e[1;38;5;75m%.2d-%.2d\e[39;0m\e[1;38;5;241m-%.2d\e[39;m   %s\n" "$year" "$month" "$day" "$entry" "$short"
-    done
-  fi
+  for f in $1*; do
+    year=$(echo "$f" | cut -d '-' -f 1)
+    month=$(echo "$f" | cut -d '-' -f 2)
+    day=$(echo "$f" | cut -d '-' -f 3)
+    entry=$(echo "$f" | cut -d '-' -f 4 | cut -d '.' -f 1)
+    short=$(head -n 1 "$f")
+    printf "%s\e[1;38;5;241m%d-\e[1;38;5;75m%.2d-%.2d\e[39;0m\e[1;38;5;241m-%.2d\e[39;m   %s\n" "$2" "$year" "$month" "$day" "$entry" "$short"
+  done
 }
 
-if [[ "$1" == "ls" || "$1" == "list" ]]; then
-  list "$2"
+new_help() {
+  echo -e "
+Usage: txtlog new [TITLE]
 
-elif [[ "$1" == "new" ]]; then
+Create a new entry. If a title is provided, txtlog will prefill the first line
+of the created file, which is used as title. Your \$EDITOR will be used.
+"
+}
+
+new() {
   glob=$(date +%Y-%m-%d-)
   new_index=1
-  filename=$(printf "%s-%.2d.txt" "$(date +%Y-%m-%d)" "$new_index")
-  if exists "$glob"; then
-    while true; do
-      filename=$(printf "%s-%.2d.txt" "$(date +%Y-%m-%d)" "$new_index")
-      if [[ -f "$filename" ]]; then
-        new_index=$(($new_index+1))
-      else
-        break
-      fi
-    done
-  fi
+  filename=$(printf "%s-%.2d.txt" "$(today)" "$new_index")
+  while true; do
+    filename=$(printf "%s-%.2d.txt" "$(today)" "$new_index")
+    if [[ -f "$filename" ]]; then
+      new_index=$(($new_index+1))
+    else
+      break
+    fi
+  done
 
-  if [[ "$2" != "" ]]; then
-    echo "${@:2}" > "$filename"
+  if [[ "$1" != "" ]]; then
+    echo "${@:1}" > "$filename"
   fi
 
   $EDITOR "$filename"
+}
 
-elif [[ "$1" == "edit" ]]; then
-  if [[ ${2: -4} == ".txt" ]]; then
-    $EDITOR "$2"
-    exit
-  fi
+edit_help() {
+  echo -e "
+Usage: txtlog edit [FILTER]
 
-  if [[ "$2" == "last" ]]; then
-    $EDITOR "$(ls -r | head -n 1)"
-    exit
-  fi
+Edit a previously written entry. You can specify a filter to prompt you with a
+list of entries to choose from. Alternatively, you may use 'all' as the
+argument to edit to start editing the latest entry. If no arguments are
+provided, you can choose from today's entries, if there are multiple.
 
-  hyphen_count=$(echo "$2" | grep -o "-" | wc -l)
+Examples:
 
-  id="$2"
-  if [[ $hyphen_count == 0 ]]; then
-    id=$(date --date="$2" +%Y-%m-%d)
-  fi
+    $ txtlog edit 2018-07-
+    \e[1;38;5;241m2018-\e[1;38;5;75m07-22\e[39;0m\e[1;38;5;241m-01\e[39;m   The Empire Strikes Back
+    \e[1;38;5;241m2018-\e[1;38;5;75m07-23\e[39;0m\e[1;38;5;241m-01\e[39;m   Return of the Jedi
+    \e[1;38;5;241m2018-\e[1;38;5;75m07-23\e[39;0m\e[1;38;5;241m-02\e[39;m   The Force Awakens
+    Which one? \e[1;38;5;241m2018-\e[1;38;5;75m07-\e[39;m
 
-  if [[ "$id" == "" ]]; then
-    exit 1
-  fi
+    $ txtlog edit
+    \e[1;38;5;241m2018-\e[1;38;5;75m07-23\e[39;0m\e[1;38;5;241m-01\e[39;m   Return of the Jedi
+    \e[1;38;5;241m2018-\e[1;38;5;75m07-23\e[39;0m\e[1;38;5;241m-02\e[39;m   The Force Awakens
+    Which one? \e[1;38;5;241m2018-\e[1;38;5;75m07-23-\e[39;m
 
-  if [[ -f "$2.txt" ]]; then
-    $EDITOR "$2.txt"
-  else
-    hyphen_count=$(echo "$id" | grep -o "-" | wc -l)
-    if [[ $hyphen_count == 2 ]]; then
-      num_options=$(ls $id* | wc -l)
-      if [[ $num_options == 0 ]]; then
-        printf "no entries yet on $id\n"
-      elif [[ $num_options == 1 ]]; then
-        $EDITOR $(ls $id*)
-      else
-        list "$id"
-        printf "\n"
-        year=$(echo "$id" | cut -d '-' -f 1)
-        month=$(echo "$id" | cut -d '-' -f 2)
-        day=$(echo "$id" | cut -d '-' -f 3)
-        printf "\e[1;38;5;241m%d-\e[1;38;5;75m%.2d-%.2d-\e[39;0m" "$year" "$month" "$day"
-        read entry
-        $EDITOR "$year-$month-$day-$entry.txt"
-      fi
-    else
-      printf "no entry %s\n" "$2"
+    $ txtlog edit last
+    # opens \e[1;38;5;241m2018-\e[1;38;5;75m07-23\e[39;0m\e[1;38;5;241m-02\e[39;m.txt
+"
+}
+
+edit() {
+  if [[ ${1: -4} == ".txt" ]]; then
+    if [[ ! -f "$1" ]]; then
+      printf "no file named %s\n" "$1"
+      exit 1
     fi
+
+    exec $EDITOR "$1"
   fi
 
-fi
+  if [[ "$1" == "last" ]]; then
+    file="$(ls -r 2>/dev/null | head -n 1)"
+    if [[ "$file" == "" ]]; then
+      printf "zero entries to choose from\n"
+      exit 1
+    fi
+
+    exec $EDITOR "$file"
+  fi
+
+  hyphen_count=$(echo "$1" | grep -o "-" | wc -l)
+
+  filter="$1"
+  if [[ "$filter" == "" ]]; then
+    filter=$(today)
+  fi
+
+  filter=$(ls ${filter}* 2>/dev/null | common_prefix)
+
+  while true; do
+    num_files=$(ls ${filter}* 2>/dev/null | wc -l)
+    case "$num_files" in
+      0)
+        printf "\e[31mzero matching entries\e[39m\n"
+        exit 1
+        ;;
+      1)
+        exec $EDITOR ${filter}*
+        ;;
+      *)
+        printf "Multiple matches:\n"
+        list "$filter" "        "
+        printf "Filter: \e[37m%s\e[39;0m" "$filter"
+        read entry
+
+        filter_new="${filter}${entry}"
+        num_files_new=$(ls ${filter_new}* 2>/dev/null | wc -l)
+        case "$num_files_new" in
+          0)
+            printf "\e[31mzero matching entries\e[39;0m\n\n"
+            ;;
+          1)
+            exec $EDITOR ${filter_new}*
+            ;;
+          *)
+            filter=$(ls ${filter_new}* 2>/dev/null | common_prefix)
+            ;;
+        esac
+    esac
+  done
+}
+
+case "$1" in
+  list)
+    list "$2"
+    ;;
+
+  new)
+    new "$2"
+    ;;
+
+  edit)
+    edit "$2"
+    ;;
+
+  *)
+    case "$2" in
+      list)
+        list_help
+        ;;
+      new)
+        new_help
+        ;;
+      edit)
+        edit_help
+        ;;
+      *)
+        root_help
+        ;;
+    esac
+    ;;
+esac
