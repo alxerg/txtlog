@@ -53,6 +53,11 @@ elif [[ "$1" == "edit" ]]; then
     exit
   fi
 
+  if [[ "$2" == "last" ]]; then
+    $EDITOR "$(ls -r | head -n 1)"
+    exit
+  fi
+
   hyphen_count=$(echo "$2" | grep -o "-" | wc -l)
 
   id="$2"
